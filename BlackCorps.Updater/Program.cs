@@ -140,6 +140,17 @@ try
         }
     }
 
+    // Verify the exe was actually replaced
+    if (File.Exists(targetExe))
+    {
+        var finalFileInfo = new FileInfo(targetExe);
+        Log($"Final verification: {targetExe} exists, size: {finalFileInfo.Length} bytes");
+    }
+    else
+    {
+        Log($"ERROR: {targetExe} does not exist after update!");
+    }
+
     Log("Restarting app...");
     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
     {
