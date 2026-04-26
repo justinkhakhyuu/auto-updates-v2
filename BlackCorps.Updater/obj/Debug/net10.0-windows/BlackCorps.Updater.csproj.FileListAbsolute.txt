@@ -1,0 +1,15 @@
+C:\Users\MTJ\Downloads\BLACK CORPS 1\exe\net10.0-windows\BlackCorps.Updater.exe
+C:\Users\MTJ\Downloads\BLACK CORPS 1\exe\net10.0-windows\BlackCorps.Updater.deps.json
+C:\Users\MTJ\Downloads\BLACK CORPS 1\exe\net10.0-windows\BlackCorps.Updater.runtimeconfig.json
+C:\Users\MTJ\Downloads\BLACK CORPS 1\exe\net10.0-windows\BlackCorps.Updater.dll
+C:\Users\MTJ\Downloads\BLACK CORPS 1\exe\net10.0-windows\BlackCorps.Updater.pdb
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.AssemblyInfoInputs.cache
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.AssemblyInfo.cs
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.csproj.CoreCompileInputs.cache
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.dll
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\refint\BlackCorps.Updater.dll
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.pdb
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.genruntimeconfig.cache
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\ref\BlackCorps.Updater.dll
+C:\Users\MTJ\Downloads\BLACK CORPS 1\BlackCorps.Updater\obj\Debug\net10.0-windows\BlackCorps.Updater.sourcelink.json

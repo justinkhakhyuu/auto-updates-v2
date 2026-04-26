@@ -13,7 +13,7 @@ internal static class UpdateChecker
 {
     private const string VersionUrl  = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/version.txt";
     private const string ZipUrl      = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/BlackCorps.zip";
-    private const string CurrentVer  = "1.8";
+    private const string CurrentVer  = "1.9";
 
     private static readonly string JustUpdatedFlag = Path.Combine(
         Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
@@ -35,81 +35,45 @@ internal static class UpdateChecker
 
             Status("Checking for updates...");
 
-            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(15) };
             string latest = (await http.GetStringAsync(VersionUrl)).Trim();
 
             if (!IsNewer(latest, CurrentVer)) return;
 
-            Status($"Update v{latest} found. Downloading...");
-            ShayanNotificationManager.Show("Update", $"v{latest} available — downloading...", NotificationType.Info, 3000);
+            Status($"Update v{latest} found — launching updater...");
+            ShayanNotificationManager.Show("Update", $"v{latest} available — updating...", NotificationType.Info, 3000);
 
-            string tempDir  = Path.Combine(Path.GetTempPath(), "BlackCorpsUpdate");
-            string zipPath  = Path.Combine(tempDir, "update.zip");
-            string unzipDir = Path.Combine(tempDir, "unpacked");
+            string appExe    = Process.GetCurrentProcess().MainModule!.FileName;
+            string appDir    = Path.GetDirectoryName(appExe)!;
+            string updaterExe = Path.Combine(appDir, "BlackCorps.Updater.exe");
 
-            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
-            Directory.CreateDirectory(tempDir);
-
-            Status("Downloading update... 0%");
-            using (var response = await http.GetAsync(ZipUrl, HttpCompletionOption.ResponseHeadersRead))
+            if (!File.Exists(updaterExe))
             {
-                response.EnsureSuccessStatusCode();
-                long total = response.Content.Headers.ContentLength ?? 70_000_000L;
-                long received = 0;
-                var buf = new byte[65536];
-                var lastUpdate = DateTime.MinValue;
-                using var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None);
-                using var stream = await response.Content.ReadAsStreamAsync();
-                int read;
-                while ((read = await stream.ReadAsync(buf, 0, buf.Length)) > 0)
-                {
-                    await fs.WriteAsync(buf, 0, read);
-                    received += read;
-                    if ((DateTime.UtcNow - lastUpdate).TotalMilliseconds >= 500)
-                    {
-                        lastUpdate = DateTime.UtcNow;
-                        int pct = (int)Math.Min(received * 100L / total, 99);
-                        string statusMsg = $"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)";
-                        owner.BeginInvoke(() => statusUpdate?.Invoke(statusMsg));
-                    }
-                }
+                owner.BeginInvoke(() => MessageBox.Show(
+                    "BlackCorps.Updater.exe not found in app folder.\nCannot update.",
+                    "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
+                return;
             }
-
-            Status("Extracting update...");
-            ZipFile.ExtractToDirectory(zipPath, unzipDir);
-
-            string appExe   = Process.GetCurrentProcess().MainModule!.FileName;
-            string appDir   = Path.GetDirectoryName(appExe)!;
-            int    pid      = Environment.ProcessId;
-
-            string selfTemp = Path.Combine(tempDir, Path.GetFileName(appExe));
-            File.Copy(appExe, selfTemp, overwrite: true);
 
             File.WriteAllText(JustUpdatedFlag, "updated");
 
             var psi = new ProcessStartInfo
             {
-                FileName        = selfTemp,
-                UseShellExecute = false,
-                CreateNoWindow  = true
+                FileName        = updaterExe,
+                UseShellExecute = true,
+                CreateNoWindow  = false
             };
-            psi.ArgumentList.Add("--updater-mode");
-            psi.ArgumentList.Add(pid.ToString());
-            psi.ArgumentList.Add(unzipDir);
-            psi.ArgumentList.Add(appDir);
+            psi.ArgumentList.Add(Environment.ProcessId.ToString());
+            psi.ArgumentList.Add(ZipUrl);
             psi.ArgumentList.Add(appExe);
             Process.Start(psi);
 
-            Status($"v{latest} ready — restarting...");
-            if (!MainMenu.MuteNotifications)
-                ShayanNotificationManager.Show("Update", $"v{latest} ready. Restarting...", NotificationType.Info, 2000);
-
-            await Task.Delay(1800);
+            await Task.Delay(1000);
             Environment.Exit(0);
         }
         catch (Exception ex)
         {
-            owner.Invoke(() => MessageBox.Show($"Update failed: {ex.Message}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
+            owner.BeginInvoke(() => MessageBox.Show($"Update failed: {ex.Message}", "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
         }
     }
 
