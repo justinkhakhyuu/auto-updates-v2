@@ -1,0 +1,2 @@
+c:\Users\MTJ\Downloads\BLACK CORPS 1\publish\net10.0-windows\win-x64\publish\BlackCorps.App.pdb
+c:\Users\MTJ\Downloads\BLACK CORPS 1\publish\net10.0-windows\win-x64\publish\BlackCorps.App.exe

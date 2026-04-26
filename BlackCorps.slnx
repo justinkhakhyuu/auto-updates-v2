@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="BlackCorps.App/BlackCorps.App.csproj" />
+  <Project Path="BlackCorps.Updater/BlackCorps.Updater.csproj" />
+</Solution>
