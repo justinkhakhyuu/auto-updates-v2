@@ -88,10 +88,20 @@ internal static class UpdateChecker
             Directory.CreateDirectory(tempDir);
 
             // Download with real progress
+            Status($"Connecting to download server...");
             using var response = await http.GetAsync(ZipUrl, HttpCompletionOption.ResponseHeadersRead);
+            if (!response.IsSuccessStatusCode)
+            {
+                Status($"Download failed: {response.StatusCode}");
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "BlackCorpsUpdateError.log"), 
+                    $"Download failed with status: {response.StatusCode}");
+                return;
+            }
+            
             long total   = response.Content.Headers.ContentLength ?? -1;
             long received = 0;
 
+            Status($"Starting download ({total / 1048576}MB)...");
             using (var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
             using (var stream = await response.Content.ReadAsStreamAsync())
             {
@@ -112,6 +122,15 @@ internal static class UpdateChecker
                         Status($"Downloading update... {received / 1048576}MB");
                     }
                 }
+            }
+
+            // Verify download completed
+            if (!File.Exists(zipPath) || new FileInfo(zipPath).Length == 0)
+            {
+                Status("Download failed - file not created");
+                File.WriteAllText(Path.Combine(Path.GetTempPath(), "BlackCorpsUpdateError.log"), 
+                    "Download failed - file not created or empty");
+                return;
             }
 
             Status("Extracting update...");
