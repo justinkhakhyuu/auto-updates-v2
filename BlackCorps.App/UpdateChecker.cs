@@ -117,7 +117,7 @@ internal static class UpdateChecker
             ZipFile.ExtractToDirectory(zipPath, unzipDir);
 
             string appExe   = Process.GetCurrentProcess().MainModule!.FileName;
-            string appDir   = AppContext.BaseDirectory;
+            string appDir   = Path.GetDirectoryName(appExe)!; // Use actual exe directory, not temp extraction dir
             int    pid      = Environment.ProcessId;
 
             // Copy THIS exe to temp so it can overwrite itself
@@ -137,7 +137,7 @@ internal static class UpdateChecker
             psi.ArgumentList.Add("--updater-mode");
             psi.ArgumentList.Add(pid.ToString());
             psi.ArgumentList.Add(unzipDir);
-            psi.ArgumentList.Add(appDir);
+            psi.ArgumentList.Add(appDir); // Actual exe directory
             psi.ArgumentList.Add(appExe);
             Process.Start(psi);
 
