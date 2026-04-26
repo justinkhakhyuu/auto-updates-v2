@@ -13,7 +13,7 @@ internal static class UpdateChecker
 {
     private const string VersionUrl  = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/version.txt";
     private const string ZipUrl      = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/BlackCorps.zip";
-    private const string CurrentVer  = "1.9";
+    private const string CurrentVer  = "1.8";
 
     private static readonly string JustUpdatedFlag = Path.Combine(
         Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
@@ -31,7 +31,7 @@ internal static class UpdateChecker
 
         try
         {
-            void Status(string msg) => owner.Invoke(() => statusUpdate?.Invoke(msg));
+            void Status(string msg) => owner.BeginInvoke(() => statusUpdate?.Invoke(msg));
 
             Status("Checking for updates...");
 
@@ -54,9 +54,10 @@ internal static class UpdateChecker
             using (var response = await http.GetAsync(ZipUrl, HttpCompletionOption.ResponseHeadersRead))
             {
                 response.EnsureSuccessStatusCode();
-                long total = response.Content.Headers.ContentLength ?? 70_000_000L; // fallback ~70MB
+                long total = response.Content.Headers.ContentLength ?? 70_000_000L;
                 long received = 0;
                 var buf = new byte[65536];
+                var lastUpdate = DateTime.MinValue;
                 using var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None);
                 using var stream = await response.Content.ReadAsStreamAsync();
                 int read;
@@ -64,8 +65,13 @@ internal static class UpdateChecker
                 {
                     await fs.WriteAsync(buf, 0, read);
                     received += read;
-                    int pct = (int)Math.Min(received * 100L / total, 99);
-                    Status($"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)");
+                    if ((DateTime.UtcNow - lastUpdate).TotalMilliseconds >= 500)
+                    {
+                        lastUpdate = DateTime.UtcNow;
+                        int pct = (int)Math.Min(received * 100L / total, 99);
+                        string statusMsg = $"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)";
+                        owner.BeginInvoke(() => statusUpdate?.Invoke(statusMsg));
+                    }
                 }
             }
 
