@@ -45,10 +45,20 @@ try
     }
     Console.WriteLine("\nDownload complete.");
 
-    Console.WriteLine("Waiting for main app to close...");
-    try { var p = System.Diagnostics.Process.GetProcessById(mainPid); p.WaitForExit(15000); }
+    Console.WriteLine("Closing main app...");
+    try
+    {
+        var p = System.Diagnostics.Process.GetProcessById(mainPid);
+        p.WaitForExit(5000); // Give it 5 seconds to close gracefully
+        if (!p.HasExited)
+        {
+            Console.WriteLine("Force closing main app...");
+            p.Kill();
+            p.WaitForExit(3000);
+        }
+    }
     catch { }
-    await Task.Delay(700);
+    await Task.Delay(500);
 
     Console.WriteLine("Extracting...");
     if (Directory.Exists(unzipDir)) Directory.Delete(unzipDir, true);
@@ -73,10 +83,13 @@ try
         UseShellExecute  = true,
         WorkingDirectory = targetDir
     });
+
+    Console.WriteLine("Update complete! Closing in 2 seconds...");
+    await Task.Delay(2000);
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"Update failed: {ex.Message}");
+    Console.WriteLine($"\nUpdate FAILED: {ex.Message}");
     Console.WriteLine("Press any key to exit...");
     Console.ReadKey();
 }
