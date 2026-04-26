@@ -14,6 +14,17 @@ string unzipDir  = Path.Combine(tempDir, "unpacked");
 
 try
 {
+    // Force kill main exe immediately
+    Console.WriteLine("Force closing main app...");
+    try
+    {
+        var p = System.Diagnostics.Process.GetProcessById(mainPid);
+        p.Kill();
+        p.WaitForExit(3000);
+    }
+    catch { }
+    await Task.Delay(500);
+
     if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
     Directory.CreateDirectory(tempDir);
 
@@ -45,24 +56,16 @@ try
     }
     Console.WriteLine("\nDownload complete.");
 
-    Console.WriteLine("Closing main app...");
-    try
-    {
-        var p = System.Diagnostics.Process.GetProcessById(mainPid);
-        p.WaitForExit(5000); // Give it 5 seconds to close gracefully
-        if (!p.HasExited)
-        {
-            Console.WriteLine("Force closing main app...");
-            p.Kill();
-            p.WaitForExit(3000);
-        }
-    }
-    catch { }
-    await Task.Delay(500);
-
     Console.WriteLine("Extracting...");
     if (Directory.Exists(unzipDir)) Directory.Delete(unzipDir, true);
     ZipFile.ExtractToDirectory(zipPath, unzipDir);
+
+    Console.WriteLine("Deleting old exe...");
+    for (int i = 0; i < 10; i++)
+    {
+        try { if (File.Exists(targetExe)) File.Delete(targetExe); break; }
+        catch { await Task.Delay(500); }
+    }
 
     Console.WriteLine("Installing...");
     foreach (string src in Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories))
