@@ -13,7 +13,7 @@ internal static class UpdateChecker
 {
     private const string VersionUrl  = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/version.txt";
     private const string ZipUrl      = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/BlackCorps.zip";
-    private const string CurrentVer  = "1.1";
+    private const string CurrentVer  = "1.2";
 
     private static readonly string JustUpdatedFlag = Path.Combine(
         Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
