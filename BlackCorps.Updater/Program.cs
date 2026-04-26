@@ -2,7 +2,18 @@
 using System.IO.Compression;
 using System.Net.Http;
 
-if (args.Length < 3) return;
+string logFile = Path.Combine(Path.GetTempPath(), "BlackCorpsUpdater.log");
+void Log(string msg)
+{
+    File.AppendAllText(logFile, $"[{DateTime.Now:HH:mm:ss}] {msg}\n");
+    Console.WriteLine(msg);
+}
+
+if (args.Length < 3)
+{
+    Log("ERROR: Missing arguments");
+    return;
+}
 
 int    mainPid   = int.Parse(args[0]);
 string zipUrl    = args[1];
@@ -12,10 +23,12 @@ string tempDir   = Path.Combine(Path.GetTempPath(), "BlackCorpsUpdate");
 string zipPath   = Path.Combine(tempDir, "update.zip");
 string unzipDir  = Path.Combine(tempDir, "unpacked");
 
+Log($"Updater started. PID={mainPid}, Target={targetExe}");
+
 try
 {
     // Force kill main exe immediately
-    Console.WriteLine("Force closing main app...");
+    Log("Force closing main app...");
     try
     {
         var p = System.Diagnostics.Process.GetProcessById(mainPid);
@@ -28,15 +41,17 @@ try
     if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
     Directory.CreateDirectory(tempDir);
 
-    Console.WriteLine("Downloading update...");
-    using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(15) };
+    Log("Downloading update...");
+    using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(20) };
     using var response = await http.GetAsync(zipUrl, HttpCompletionOption.ResponseHeadersRead);
     response.EnsureSuccessStatusCode();
 
-    long total    = response.Content.Headers.ContentLength ?? 70_000_000L;
+    long total = response.Content.Headers.ContentLength ?? 100_000_000L;
     long received = 0;
-    var  buf      = new byte[65536];
-    var  lastPrint = DateTime.MinValue;
+    var buf = new byte[131072];
+    var lastPrint = DateTime.MinValue;
+
+    Log($"Total size: {total / 1048576}MB");
 
     using (var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
     using (var stream = await response.Content.ReadAsStreamAsync())
@@ -46,46 +61,47 @@ try
         {
             await fs.WriteAsync(buf, 0, read);
             received += read;
-            if ((DateTime.UtcNow - lastPrint).TotalMilliseconds >= 500)
+            if ((DateTime.UtcNow - lastPrint).TotalMilliseconds >= 300)
             {
                 lastPrint = DateTime.UtcNow;
                 int pct = (int)Math.Min(received * 100L / total, 99);
-                Console.Write($"\rDownloading... {pct}% ({received / 1048576}MB / {total / 1048576}MB)  ");
+                string status = $"Downloading... {pct}% ({received / 1048576}MB / {total / 1048576}MB)";
+                Log(status);
             }
         }
     }
-    Console.WriteLine("\nDownload complete.");
+    Log("Download complete.");
 
-    Console.WriteLine("Extracting...");
+    Log("Extracting...");
     if (Directory.Exists(unzipDir)) Directory.Delete(unzipDir, true);
     ZipFile.ExtractToDirectory(zipPath, unzipDir);
 
-    Console.WriteLine("Deleting old exe...");
+    Log("Deleting old exe...");
     for (int i = 0; i < 10; i++)
     {
         try { if (File.Exists(targetExe)) File.Delete(targetExe); break; }
         catch { await Task.Delay(500); }
     }
 
-    Console.WriteLine("Installing...");
-    Console.WriteLine($"Source: {unzipDir}");
-    Console.WriteLine($"Target: {targetDir}");
-    Console.WriteLine($"Files to copy: {Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories).Length}");
+    Log("Installing...");
+    Log($"Source: {unzipDir}");
+    Log($"Target: {targetDir}");
+    Log($"Files to copy: {Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories).Length}");
 
     foreach (string src in Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories))
     {
         string fileName = Path.GetFileName(src);
-        Console.WriteLine($"Found file: {fileName}");
+        Log($"Found file: {fileName}");
 
         // Skip copying the updater itself (it's already running)
         if (fileName.Equals("BlackCorps.Updater.exe", StringComparison.OrdinalIgnoreCase))
         {
-            Console.WriteLine($"Skipping updater: {fileName}");
+            Log($"Skipping updater: {fileName}");
             continue;
         }
 
         string dest = Path.Combine(targetDir, Path.GetRelativePath(unzipDir, src));
-        Console.WriteLine($"Copying {src} -> {dest}");
+        Log($"Copying {src} -> {dest}");
 
         Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
         for (int i = 0; i < 5; i++)
@@ -93,18 +109,18 @@ try
             try
             {
                 File.Copy(src, dest, overwrite: true);
-                Console.WriteLine($"Copied successfully: {fileName}");
+                Log($"Copied successfully: {fileName}");
                 break;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Copy failed (attempt {i + 1}): {ex.Message}");
+                Log($"Copy failed (attempt {i + 1}): {ex.Message}");
                 await Task.Delay(500);
             }
         }
     }
 
-    Console.WriteLine("Restarting app...");
+    Log("Restarting app...");
     System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
     {
         FileName         = targetExe,
@@ -116,12 +132,13 @@ try
     string flagPath = Path.Combine(Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
     File.WriteAllText(flagPath, "updated");
 
-    Console.WriteLine("Update complete! Closing in 2 seconds...");
+    Log("Update complete! Closing in 2 seconds...");
     await Task.Delay(2000);
 }
 catch (Exception ex)
 {
-    Console.WriteLine($"\nUpdate FAILED: {ex.Message}");
-    Console.WriteLine("Press any key to exit...");
+    Log($"UPDATE FAILED: {ex.Message}");
+    Log($"Stack trace: {ex.StackTrace}");
+    Log("Press any key to exit...");
     Console.ReadKey();
 }
