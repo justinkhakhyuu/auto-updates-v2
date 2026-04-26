@@ -46,14 +46,15 @@ internal static class UpdateChecker
         return false;
     }
 
-    // Called by the loader — statusUpdate sets the loader's status label text
-    public static async Task CheckAndApplyAsync(Form owner, Action<string>? statusUpdate = null)
+    // Called by the loader — statusUpdate sets the loader's status label text, progressUpdate sets the progress ring
+    public static async Task CheckAndApplyAsync(Form owner, Action<string>? statusUpdate = null, Action<float>? progressUpdate = null)
     {
         if (WasJustUpdated()) return;
 
         try
         {
             void Status(string msg) => owner.Invoke(() => statusUpdate?.Invoke(msg));
+            void Progress(float pct) => owner.Invoke(() => progressUpdate?.Invoke(pct));
 
             Status("Checking for updates...");
             bool online = await WaitForInternetAsync(msg => owner.Invoke(() => statusUpdate?.Invoke(msg)));
@@ -104,6 +105,7 @@ internal static class UpdateChecker
                     {
                         int pct = (int)(received * 100 / total);
                         Status($"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)");
+                        Progress(50f + (pct * 0.4f)); // Scale 50-90% for download
                     }
                     else
                     {
