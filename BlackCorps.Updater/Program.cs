@@ -68,19 +68,39 @@ try
     }
 
     Console.WriteLine("Installing...");
+    Console.WriteLine($"Source: {unzipDir}");
+    Console.WriteLine($"Target: {targetDir}");
+    Console.WriteLine($"Files to copy: {Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories).Length}");
+
     foreach (string src in Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories))
     {
         string fileName = Path.GetFileName(src);
+        Console.WriteLine($"Found file: {fileName}");
+
         // Skip copying the updater itself (it's already running)
         if (fileName.Equals("BlackCorps.Updater.exe", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.WriteLine($"Skipping updater: {fileName}");
             continue;
+        }
 
         string dest = Path.Combine(targetDir, Path.GetRelativePath(unzipDir, src));
+        Console.WriteLine($"Copying {src} -> {dest}");
+
         Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
         for (int i = 0; i < 5; i++)
         {
-            try { File.Copy(src, dest, overwrite: true); break; }
-            catch { await Task.Delay(500); }
+            try
+            {
+                File.Copy(src, dest, overwrite: true);
+                Console.WriteLine($"Copied successfully: {fileName}");
+                break;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Copy failed (attempt {i + 1}): {ex.Message}");
+                await Task.Delay(500);
+            }
         }
     }
 
