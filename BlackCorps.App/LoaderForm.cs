@@ -215,25 +215,9 @@ public class LoaderForm : Form
             if (msg.StartsWith("Checking for updates"))
             {
                 sequenceTimer.Stop();
-                _targetProg = 50f; // Set progress to 50% during update
-                pctLabel.Text = "50%";
-                this.Invalidate();
                 System.Threading.Tasks.Task.Run(async () => 
                 {
-                    await UpdateChecker.CheckAndApplyAsync(this, 
-                        msg => this.Invoke(() => 
-                        {
-                            statusLabel.Text = msg;
-                            statusLabel.Invalidate();
-                            this.Invalidate();
-                        }),
-                        pct => this.Invoke(() => 
-                        {
-                            _targetProg = pct;
-                            pctLabel.Text = $"{(int)pct}%";
-                            this.Invalidate();
-                        })
-                    );
+                    await UpdateChecker.CheckAndApplyAsync(this, msg => this.Invoke(() => statusLabel.Text = msg));
                     this.Invoke(() => sequenceTimer.Start());
                 });
             }

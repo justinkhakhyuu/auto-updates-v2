@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("BlackCorps.App")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+814b8aa6080c84104546ded08f8f9e4abb0ed55e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b2f8d610e992f7f236f1b3f576a8337230affb77")]
 [assembly: System.Reflection.AssemblyProductAttribute("BlackCorps.App")]
 [assembly: System.Reflection.AssemblyTitleAttribute("BlackCorps.App")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

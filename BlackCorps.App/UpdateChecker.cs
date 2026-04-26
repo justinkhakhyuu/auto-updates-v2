@@ -46,15 +46,14 @@ internal static class UpdateChecker
         return false;
     }
 
-    // Called by the loader — statusUpdate sets the loader's status label text, progressUpdate sets the progress ring
-    public static async Task CheckAndApplyAsync(Form owner, Action<string>? statusUpdate = null, Action<float>? progressUpdate = null)
+    // Called by the loader — statusUpdate sets the loader's status label text
+    public static async Task CheckAndApplyAsync(Form owner, Action<string>? statusUpdate = null)
     {
         if (WasJustUpdated()) return;
 
         try
         {
             void Status(string msg) => owner.Invoke(() => statusUpdate?.Invoke(msg));
-            void Progress(float pct) => owner.Invoke(() => progressUpdate?.Invoke(pct));
 
             Status("Checking for updates...");
             bool online = await WaitForInternetAsync(msg => owner.Invoke(() => statusUpdate?.Invoke(msg)));
@@ -88,20 +87,17 @@ internal static class UpdateChecker
             Directory.CreateDirectory(tempDir);
 
             // Download with real progress
-            Status($"Connecting to download server...");
+            Status($"Downloading update...");
             using var response = await http.GetAsync(ZipUrl, HttpCompletionOption.ResponseHeadersRead);
             if (!response.IsSuccessStatusCode)
             {
                 Status($"Download failed: {response.StatusCode}");
-                File.WriteAllText(Path.Combine(Path.GetTempPath(), "BlackCorpsUpdateError.log"), 
-                    $"Download failed with status: {response.StatusCode}");
                 return;
             }
-            
+
             long total   = response.Content.Headers.ContentLength ?? -1;
             long received = 0;
 
-            Status($"Starting download ({total / 1048576}MB)...");
             using (var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write))
             using (var stream = await response.Content.ReadAsStreamAsync())
             {
@@ -115,22 +111,12 @@ internal static class UpdateChecker
                     {
                         int pct = (int)(received * 100 / total);
                         Status($"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)");
-                        Progress(50f + (pct * 0.4f)); // Scale 50-90% for download
                     }
                     else
                     {
                         Status($"Downloading update... {received / 1048576}MB");
                     }
                 }
-            }
-
-            // Verify download completed
-            if (!File.Exists(zipPath) || new FileInfo(zipPath).Length == 0)
-            {
-                Status("Download failed - file not created");
-                File.WriteAllText(Path.Combine(Path.GetTempPath(), "BlackCorpsUpdateError.log"), 
-                    "Download failed - file not created or empty");
-                return;
             }
 
             Status("Extracting update...");
