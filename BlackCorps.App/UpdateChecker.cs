@@ -13,7 +13,7 @@ internal static class UpdateChecker
 {
     private const string VersionUrl  = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/version.txt";
     private const string ZipUrl      = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/BlackCorps.zip";
-    private const string CurrentVer  = "1.0";
+    private const string CurrentVer  = "1.1";
 
     private static readonly string JustUpdatedFlag = Path.Combine(
         Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
@@ -35,7 +35,7 @@ internal static class UpdateChecker
 
             Status("Checking for updates...");
 
-            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+            using var http = new HttpClient { Timeout = TimeSpan.FromMinutes(10) };
             string latest = (await http.GetStringAsync(VersionUrl)).Trim();
 
             if (!IsNewer(latest, CurrentVer)) return;
@@ -50,10 +50,31 @@ internal static class UpdateChecker
             if (Directory.Exists(tempDir)) Directory.Delete(tempDir, true);
             Directory.CreateDirectory(tempDir);
 
-            Status("Downloading update...");
-            var bytes = await http.GetByteArrayAsync(ZipUrl);
-            File.WriteAllBytes(zipPath, bytes);
-            Status($"Downloaded {bytes.Length / 1048576}MB");
+            Status("Downloading update... 0%");
+            using (var response = await http.GetAsync(ZipUrl, HttpCompletionOption.ResponseHeadersRead))
+            {
+                response.EnsureSuccessStatusCode();
+                long total = response.Content.Headers.ContentLength ?? -1;
+                long received = 0;
+                var buf = new byte[65536];
+                using var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None);
+                using var stream = await response.Content.ReadAsStreamAsync();
+                int read;
+                while ((read = await stream.ReadAsync(buf, 0, buf.Length)) > 0)
+                {
+                    await fs.WriteAsync(buf, 0, read);
+                    received += read;
+                    if (total > 0)
+                    {
+                        int pct = (int)(received * 100L / total);
+                        Status($"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)");
+                    }
+                    else
+                    {
+                        Status($"Downloading update... {received / 1048576}MB");
+                    }
+                }
+            }
 
             Status("Extracting update...");
             ZipFile.ExtractToDirectory(zipPath, unzipDir);
