@@ -13,7 +13,7 @@ internal static class UpdateChecker
 {
     private const string VersionUrl  = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/version.txt";
     private const string ZipUrl      = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/BlackCorps.zip";
-    private const string CurrentVer  = "1.3";
+    private const string CurrentVer  = "1.9";
 
     private static readonly string JustUpdatedFlag = Path.Combine(
         Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
@@ -54,7 +54,7 @@ internal static class UpdateChecker
             using (var response = await http.GetAsync(ZipUrl, HttpCompletionOption.ResponseHeadersRead))
             {
                 response.EnsureSuccessStatusCode();
-                long total = response.Content.Headers.ContentLength ?? -1;
+                long total = response.Content.Headers.ContentLength ?? 70_000_000L; // fallback ~70MB
                 long received = 0;
                 var buf = new byte[65536];
                 using var fs = new FileStream(zipPath, FileMode.Create, FileAccess.Write, FileShare.None);
@@ -64,15 +64,8 @@ internal static class UpdateChecker
                 {
                     await fs.WriteAsync(buf, 0, read);
                     received += read;
-                    if (total > 0)
-                    {
-                        int pct = (int)(received * 100L / total);
-                        Status($"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)");
-                    }
-                    else
-                    {
-                        Status($"Downloading update... {received / 1048576}MB");
-                    }
+                    int pct = (int)Math.Min(received * 100L / total, 99);
+                    Status($"Downloading update... {pct}%  ({received / 1048576}MB / {total / 1048576}MB)");
                 }
             }
 
