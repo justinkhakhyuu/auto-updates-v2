@@ -79,9 +79,22 @@ try
     Log("Deleting old exe...");
     for (int i = 0; i < 10; i++)
     {
-        try { if (File.Exists(targetExe)) File.Delete(targetExe); break; }
-        catch { await Task.Delay(500); }
+        try
+        {
+            if (File.Exists(targetExe))
+            {
+                File.Delete(targetExe);
+                Log($"Deleted old exe: {targetExe}");
+            }
+            break;
+        }
+        catch (Exception ex)
+        {
+            Log($"Delete failed (attempt {i + 1}): {ex.Message}");
+            await Task.Delay(500);
+        }
     }
+    await Task.Delay(1000); // Wait for file system to release the file
 
     Log("Installing...");
     Log($"Source: {unzipDir}");
@@ -109,7 +122,14 @@ try
             try
             {
                 File.Copy(src, dest, overwrite: true);
+                var newFileInfo = new FileInfo(dest);
+                var srcFileInfo = new FileInfo(src);
                 Log($"Copied successfully: {fileName}");
+                Log($"  Source size: {srcFileInfo.Length} bytes, Dest size: {newFileInfo.Length} bytes");
+                if (srcFileInfo.Length == newFileInfo.Length)
+                    Log($"  File sizes match - copy verified");
+                else
+                    Log($"  WARNING: File sizes don't match!");
                 break;
             }
             catch (Exception ex)
