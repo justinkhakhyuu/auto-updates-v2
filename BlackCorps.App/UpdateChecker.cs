@@ -13,7 +13,7 @@ internal static class UpdateChecker
 {
     private const string VersionUrl  = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/version.txt";
     private const string ZipUrl      = "https://raw.githubusercontent.com/justinkhakhyuu/auto-updates-v2/main/BlackCorps.zip";
-    private const string CurrentVer  = "1.9";
+    private const string CurrentVer  = "1.7";
 
     private static readonly string JustUpdatedFlag = Path.Combine(
         Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
@@ -54,8 +54,6 @@ internal static class UpdateChecker
                     "Update Error", MessageBoxButtons.OK, MessageBoxIcon.Error));
                 return;
             }
-
-            File.WriteAllText(JustUpdatedFlag, "updated");
 
             var psi = new ProcessStartInfo
             {

@@ -70,6 +70,11 @@ try
     Console.WriteLine("Installing...");
     foreach (string src in Directory.GetFiles(unzipDir, "*", SearchOption.AllDirectories))
     {
+        string fileName = Path.GetFileName(src);
+        // Skip copying the updater itself (it's already running)
+        if (fileName.Equals("BlackCorps.Updater.exe", StringComparison.OrdinalIgnoreCase))
+            continue;
+
         string dest = Path.Combine(targetDir, Path.GetRelativePath(unzipDir, src));
         Directory.CreateDirectory(Path.GetDirectoryName(dest)!);
         for (int i = 0; i < 5; i++)
@@ -86,6 +91,10 @@ try
         UseShellExecute  = true,
         WorkingDirectory = targetDir
     });
+
+    // Set flag to prevent update loop on next run
+    string flagPath = Path.Combine(Path.GetTempPath(), "BlackCorpsJustUpdated.flag");
+    File.WriteAllText(flagPath, "updated");
 
     Console.WriteLine("Update complete! Closing in 2 seconds...");
     await Task.Delay(2000);
