@@ -1,8 +1,0 @@
-C:\Users\MTJ\Downloads\BlackCorps.App\Client.dll
-C:\Users\MTJ\Downloads\BlackCorps.App\Client.pdb
-C:\Users\MTJ\Downloads\BlackCorps.App\D3DCompiler_47_cor3.dll
-C:\Users\MTJ\Downloads\BlackCorps.App\PenImc_cor3.dll
-C:\Users\MTJ\Downloads\BlackCorps.App\PresentationNative_cor3.dll
-C:\Users\MTJ\Downloads\BlackCorps.App\vcruntime140_cor3.dll
-C:\Users\MTJ\Downloads\BlackCorps.App\wpfgfx_cor3.dll
-C:\Users\MTJ\Downloads\BlackCorps.App\cimgui.dll
